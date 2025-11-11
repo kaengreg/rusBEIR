@@ -87,6 +87,18 @@ To install docker on your local machine, please refer here: https://docs.docker.
 
 After docker installation, please follow the steps below to get docker container up and running:
 
+1️⃣ Run Elasticsearch 9.1.6 (HTTPS + password)
+docker run -d --name elastic9 \
+  -p 9200:9200 -p 9300:9300 \
+  -e ELASTIC_PASSWORD=rusbeir \
+  -e discovery.type=single-node \
+  docker.elastic.co/elasticsearch/elasticsearch:9.1.6
+
+2️⃣ Copy the auto-generated HTTPS certificate
+docker cp elastic9:/usr/share/elasticsearch/config/certs/http_ca.crt ./http_ca.crt
+
+
+Use this for older elasticsearch versions (< 8)
 1. docker pull docker.elastic.co/elasticsearch/elasticsearch:7.5.2
 2. docker run -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.5.2
 """ 

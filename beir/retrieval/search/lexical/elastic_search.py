@@ -1,6 +1,7 @@
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import streaming_bulk
 from typing import Dict, List, Tuple
+from pathlib import Path
 import logging
 import tqdm
 import sys
@@ -32,11 +33,30 @@ class ElasticSearch(object):
         self.title_key = es_credentials["keys"]["title"]
         self.number_of_shards = es_credentials["number_of_shards"]
 
-        self.es = Elasticsearch(
-            [es_credentials["hostname"]],
-            timeout=es_credentials["timeout"],
-            retry_on_timeout=es_credentials["retry_on_timeout"],
-            maxsize=es_credentials["maxsize"])
+        # Use this if you are running elastic-docker <8 version 
+        #self.es = Elasticsearch(
+        #    [es_credentials["hostname"]],
+        #    timeout=es_credentials.get("timeout"),
+        #    retry_on_timeout=es_credentials.get("retry_on_timeout"),
+        #    maxsize=es_credentials.get("maxsize"),
+        #)
+        
+        # elastic version >= 8: prefer https and take params from config
+        CA_PATH = Path(__file__).parent / "http_ca.crt"
+        
+        host = es_credentials.get("hostname", "localhost:9200")
+
+        username = es_credentials.get("username")
+        password = es_credentials.get("password")
+        basic_auth = (username, password) if username and password else None
+        
+        # Build kwargs excluding None to avoid invalid/unsupported params
+        es_kwargs = {
+            "basic_auth": basic_auth,
+            "ca_certs": str(CA_PATH),
+            "retry_on_timeout": es_credentials.get("retry_on_timeout"),
+        }
+        self.es = Elasticsearch(host, **es_kwargs)
 
     def check_language_supported(self):
         """Check Language Supported in Elasticsearch

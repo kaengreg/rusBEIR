@@ -10,7 +10,7 @@ def sleep(seconds):
 class BM25Search(BaseSearch):
     def __init__(self, index_name: str, hostname: str = "localhost", keys: Dict[str, str] = {"title": "title", "body": "txt"}, language: str = "english",
                  batch_size: int = 128, timeout: int = 1000, retry_on_timeout: bool = True, maxsize: int = 24, number_of_shards: int = "default",
-                 initialize: bool = True, sleep_for: int = 2):
+                 initialize: bool = True, sleep_for: int = 2, username: str = 'elastic', password: str = 'rusbeir'):
         keys["body"] = 'text'
         self.results = {}
         self.batch_size = batch_size
@@ -24,7 +24,9 @@ class BM25Search(BaseSearch):
             "retry_on_timeout": retry_on_timeout,
             "maxsize": maxsize,
             "number_of_shards": number_of_shards,
-            "language": language
+            "language": language,
+            "username": username,
+            "password": password,
         }
         self.es = ElasticSearch(self.config)
         if self.initialize:
