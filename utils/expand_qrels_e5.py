@@ -16,6 +16,7 @@ from typing import List, Dict
 import os
 from rusBeIR.retrieval.models.HFTransformers import HFTransformers
 import csv
+from pathlib import Path
 
 
 class QueryDataset(Dataset):
@@ -69,7 +70,9 @@ e5tuned = E5ModelTuned()
 corpus_emb = e5tuned.encode_passages([doc['text'] for doc in corpus.values()])
 results = e5tuned.retrieve(rel_docs, corpus_emb, list(corpus.keys()), top_n=10)
 
-with open('msmarco-qrels-expand.jsonl','w', encoding='utf-8') as f:
+expanded_jsonl = 'msmarco-qrels-expand.jsonl'
+Path(expanded_jsonl).expanduser().parent.mkdir(parents=True, exist_ok=True)
+with open(expanded_jsonl, 'w', encoding='utf-8') as f:
     json.dump(results, f, ensure_ascii=False, indent=4)
 
 new_rel_docs = {cid: {k: 1 for k, v in cres.items() if v > 96} for cid, cres in list(results.items())}
@@ -88,6 +91,7 @@ for query_id, doc_scores in qrels.items():
 
 output_file = "dev-expanded-qp.tsv"
 
+Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
 with open(output_file, mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file, delimiter='\t')
     writer.writerow(['query-id', 'corpus-id', 'score'])

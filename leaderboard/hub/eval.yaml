@@ -1,0 +1,87 @@
+name: RusBEIR
+description: Russian BEIR-style benchmark for zero-shot information retrieval models.
+evaluation_framework: rusbeir
+tasks:
+  - id: average
+    split: test
+  - id: rus-nfcorpus
+    config: default
+    split: test
+  - id: rus-arguana
+    config: default
+    split: test
+  - id: rus-scifact
+    config: default
+    split: test
+  - id: rus-scidocs
+    config: default
+    split: test
+  - id: rus-trec-covid
+    config: default
+    split: test
+  - id: rus-fiqa
+    config: default
+    split: dev
+  - id: rus-quora
+    config: default
+    split: dev
+  - id: rus-cqadupstack
+    config: default
+    split: test
+  - id: rus-touche
+    config: default
+    split: test
+  - id: rus-mmarco
+    config: default
+    split: dev
+  - id: rus-miracl
+    config: default
+    split: dev
+  - id: rus-xquad
+    config: default
+    split: dev
+  - id: rus-xquad-sentences
+    config: default
+    split: dev
+  - id: rus-tydiqa
+    config: default
+    split: dev
+  - id: sberquad-retrieval
+    config: default
+    split: validation
+  - id: ruscibench-retrieval
+    config: default
+    split: dev
+  - id: ru-facts
+    config: default
+    split: train
+  - id: rubq
+    config: default
+    split: test
+  - id: ria-news
+    config: default
+    split: test
+  - id: wikifacts-articles
+    config: default
+    split: dev
+  - id: wikifacts-para
+    config: default
+    split: dev
+  - id: wikifacts-sents
+    config: default
+    split: dev
+  - id: wikifacts-window_2
+    config: default
+    split: dev
+  - id: wikifacts-window_3
+    config: default
+    split: dev
+  - id: wikifacts-window_4
+    config: default
+    split: dev
+  - id: wikifacts-window_5
+    config: default
+    split: dev
+  - id: wikifacts-window_6
+    config: default
+    split: dev

@@ -82,7 +82,7 @@ class DatasetEvaluator:
 
     def retrieve(self, text_type: str = 'processed_text', results_path=Path('rusBeIR-results')):
         self.results_dir = Path(results_path)
-        self.results_dir.mkdir(exist_ok=True)
+        self.results_dir.mkdir(parents=True, exist_ok=True)
 
         for dataset_name, args in tqdm(self.datasets.items(), desc="Processing datasets"):
             print(f"Processing {dataset_name}...")
@@ -106,10 +106,10 @@ class DatasetEvaluator:
     def rerank(self, model, text_type: str = 'text',
                batch_size: int = 1, results_path='rusBeIR-results'):
         self.results_dir = Path(results_path)
-        self.results_rerank_dir = Path(results_path + '-reranked')
+        self.results_rerank_dir = Path(f"{results_path}-reranked")
 
-        self.results_rerank_dir.mkdir(exist_ok=True)
-        self.results_dir.mkdir(exist_ok=True)
+        self.results_rerank_dir.mkdir(parents=True, exist_ok=True)
+        self.results_dir.mkdir(parents=True, exist_ok=True)
 
         self.rerank_model = model
         if isinstance(model, CrossEncoder):

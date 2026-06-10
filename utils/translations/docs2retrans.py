@@ -1,5 +1,6 @@
 # %%
 import json
+from pathlib import Path
 
 # %%
 def get_empty_text_ids(input_file):
@@ -13,6 +14,7 @@ def get_empty_text_ids(input_file):
     return empty_ids
 
 def filter_docs(input_file, output_file, empty_ids):
+    Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(input_file, 'r', encoding='utf-8') as fin, open(output_file, 'w', encoding='utf-8') as fout:
         for line in fin:
             doc = json.loads(line)
@@ -28,6 +30,5 @@ empty_ids = get_empty_text_ids(file1)
 filter_docs(file2, output_file, empty_ids)
 
 # %%
-
 
 

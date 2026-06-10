@@ -1,0 +1,53 @@
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Python caches and local tooling
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Local environments and build artifacts
+.venv/
+venv/
+env/
+build/
+dist/
+*.egg-info/
+
+# Local app/runtime state
+.gradio/
+.cache/
+*.log
+
+# Generated archives and evaluation outputs
+*.zip
+rusBeIR-results*/
+results/
+results-*/
+
+# Local scratch notebooks and one-off files
+/pooling-cleaning.ipynb
+/100-pooling.json
+
+# Local datasets or generated corpora kept outside the package contract
+/translations/
+
+# utils contains many local helper scripts; keep only committed package utilities visible by default.
+/utils/*.ipynb
+/utils/e5.py
+/utils/line_count_checkpoint.txt
+/utils/metrics2latex.py
+/utils/metrics_compare.py
+/utils/queries_compare.py
+/utils/renumber.py
+/utils/rework_json.py
+/utils/text_swap.py
+/utils/top100.py
+/utils/tsv2jsonl.py
+/utils/translations/*.ipynb

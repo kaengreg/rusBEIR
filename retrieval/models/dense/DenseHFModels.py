@@ -25,13 +25,16 @@ class QueryDataset(Dataset):
 
 
 class DenseHFModels:
-    def __init__(self, model_name: str, maxlen: int = 512, batch_size: int = 128, device: str = 'cuda', model_sep: str = "[SEP]"):
+    def __init__(self, model_name: str, maxlen: int = 512, batch_size: int = 128, device: str = 'cuda',
+                 model_sep: str = "[SEP]", padding_side: str | None = None):
         """
         initialize model and tokenizer from hf-transformers
         :param model_name: hf-model repo
         :param device: where to run the model
         """
         self.model, self.tokenizer = self.load_model(model_name, device)
+        if padding_side is not None:
+            self.tokenizer.padding_side = padding_side
         self.max_len = maxlen
         self.device = device
         self.batch_size = batch_size
@@ -119,6 +122,10 @@ class DenseHFModels:
                 batch_embeddings = self._average_pool(outputs, batch_dict['attention_mask'])
             elif pooling_method == 'cls':
                 batch_embeddings = self._cls_pool(outputs)
+            elif pooling_method == 'pooler':
+                batch_embeddings = self._pooler_pool(outputs)
+            elif pooling_method == 'last_token':
+                batch_embeddings = self._last_token_pool(outputs, batch_dict['attention_mask'])
             else:
                 raise ValueError(f"Unknown pooling method: {pooling_method}")
 
@@ -134,3 +141,17 @@ class DenseHFModels:
 
     def _cls_pool(self, model_output: torch.Tensor) -> torch.Tensor:
         return model_output.last_hidden_state[:, 0, :]
+
+    def _pooler_pool(self, model_output: torch.Tensor) -> torch.Tensor:
+        if not hasattr(model_output, "pooler_output") or model_output.pooler_output is None:
+            raise ValueError("The selected model does not provide pooler_output.")
+        return model_output.pooler_output
+
+    def _last_token_pool(self, model_output: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+        last_hidden_states = model_output.last_hidden_state
+        left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
+        if left_padding:
+            return last_hidden_states[:, -1]
+        sequence_lengths = attention_mask.sum(dim=1) - 1
+        batch_size = last_hidden_states.shape[0]
+        return last_hidden_states[torch.arange(batch_size, device=last_hidden_states.device), sequence_lengths]

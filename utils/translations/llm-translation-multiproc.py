@@ -9,6 +9,7 @@ from typing import List
 from openai import OpenAI
 from tqdm import tqdm
 import os
+from pathlib import Path
 
 
 class QwenInstructTranslatorViaVLLM:
@@ -309,6 +310,7 @@ class QwenInstructTranslatorViaVLLM:
 
         processed_new = 0
 
+        Path(output_file_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
         with tqdm(total=total_lines, initial=resume_line, desc=f"Process {os.getpid()} File {progress_bar_position+1}", unit="lines", position=progress_bar_position) as pbar, \
                 open(output_file_path, 'a', encoding='utf-8') as fout:
             with open(input_file_path, 'r', encoding='utf-8') as fin:
@@ -472,6 +474,7 @@ def main():
         total_time = overall_end_time - overall_start_time
         log_message = f"Total time for all processes: {total_time:.2f} seconds\n"
         log_path = f"{base_dir}/total_time_qwen_log.txt"
+        Path(log_path).expanduser().parent.mkdir(parents=True, exist_ok=True)
         with open(log_path, 'a', encoding='utf-8') as f:
             f.write(log_message)
         print(log_message)

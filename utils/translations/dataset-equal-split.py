@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 
 def split_jsonl(input_file, parts=3, output_prefix='corpus_part'):
@@ -18,6 +19,7 @@ def split_jsonl(input_file, parts=3, output_prefix='corpus_part'):
         chunk_lines = lines[start:start+current_chunk_size]
 
         output_file = f"{output_prefix}{i+1}.jsonl"
+        Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w", encoding="utf-8") as out_f:
             out_f.writelines(chunk_lines)
 

@@ -1,8 +1,11 @@
+import argparse
+import json
 import re
+from pathlib import Path
+
+import nltk
 import pymorphy3
 from nltk.corpus import stopwords
-import nltk
-import json
 from tqdm import tqdm
 
 nltk.download('stopwords')
@@ -24,21 +27,34 @@ def preprocess_text(text):
 
     return processed_text
 
-input_file = "queries_default.jsonl"
-output_file = "queries.jsonl"
 
-with open(input_file, 'r', encoding='utf-8') as infile:
-    total_lines = sum(1 for _ in infile)
-
-corpus = {}
-with open(input_file, 'r') as file:
-    for line in tqdm(file, total=total_lines, desc='Preprocessing text'):
-        record = json.loads(line)
-        record['processed_text'] = preprocess_text(record['text'])
-        corpus[record['_id']] = record
-
-with open(output_file, 'w', encoding='utf-8') as outfile:
-    for cid in corpus.keys():
-      outfile.write(json.dumps(corpus[cid], ensure_ascii=False) + '\n')
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input_file', help='Path to the input JSONL file.')
+    parser.add_argument('output_file', help='Path to the output JSONL file.')
+    return parser.parse_args()
 
 
+def main():
+    args = parse_args()
+    input_file = args.input_file
+    output_file = args.output_file
+
+    with open(input_file, 'r', encoding='utf-8') as infile:
+        total_lines = sum(1 for _ in infile)
+
+    corpus = {}
+    with open(input_file, 'r', encoding='utf-8') as file:
+        for line in tqdm(file, total=total_lines, desc='Preprocessing text'):
+            record = json.loads(line)
+            record['processed_text'] = preprocess_text(record['text'])
+            corpus[record['_id']] = record
+
+    Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as outfile:
+        for cid in corpus.keys():
+            outfile.write(json.dumps(corpus[cid], ensure_ascii=False) + '\n')
+
+
+if __name__ == '__main__':
+    main()

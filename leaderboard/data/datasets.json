@@ -1,0 +1,245 @@
+[
+  {
+    "name": "rus-nfcorpus",
+    "hf_repo": "kaengreg/rus-nfcorpus",
+    "qrels_repo": "kaengreg/rus-nfcorpus-qrels",
+    "split": "test",
+    "task": "Bio-Medical IR",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-arguana",
+    "hf_repo": "kaengreg/rus-arguana",
+    "qrels_repo": "kaengreg/rus-arguana-qrels",
+    "split": "test",
+    "task": "Argument Retrieval",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-scifact",
+    "hf_repo": "kaengreg/rus-scifact",
+    "qrels_repo": "kaengreg/rus-scifact-qrels",
+    "split": "test",
+    "task": "Fact Checking",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-scidocs",
+    "hf_repo": "kaengreg/rus-scidocs",
+    "qrels_repo": "kaengreg/rus-scidocs-qrels",
+    "split": "test",
+    "task": "Citation Prediction",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-trec-covid",
+    "hf_repo": "kaengreg/rus-trec-covid",
+    "qrels_repo": "kaengreg/rus-trec-covid-qrels",
+    "split": "test",
+    "task": "Bio-Medical IR",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-fiqa",
+    "hf_repo": "kaengreg/rus-fiqa",
+    "qrels_repo": "kaengreg/rus-fiqa-qrels",
+    "split": "dev",
+    "task": "Question Answering",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-quora",
+    "hf_repo": "kaengreg/rus-quora",
+    "qrels_repo": "kaengreg/rus-quora-qrels",
+    "split": "dev",
+    "task": "Duplicate Question Retrieval",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-cqadupstack",
+    "hf_repo": "kaengreg/rus-cqadupstack",
+    "qrels_repo": "kaengreg/rus-cqadupstack-qrels",
+    "split": "test",
+    "task": "Duplicate Question Retrieval",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-touche",
+    "hf_repo": "kaengreg/rus-touche",
+    "qrels_repo": "kaengreg/rus-touche-qrels",
+    "split": "test",
+    "task": "Argument Retrieval",
+    "origin": "BEIR translation",
+    "official": true
+  },
+  {
+    "name": "rus-mmarco",
+    "hf_repo": "kaengreg/rus-mmarco-google",
+    "qrels_repo": "kaengreg/rus-mmarco-qrels",
+    "split": "dev",
+    "task": "Information Retrieval",
+    "origin": "Multilingual MS MARCO",
+    "official": true
+  },
+  {
+    "name": "rus-miracl",
+    "hf_repo": "kaengreg/rus-miracl",
+    "qrels_repo": "kaengreg/rus-miracl-qrels",
+    "split": "dev",
+    "task": "Information Retrieval",
+    "origin": "MIRACL",
+    "official": true
+  },
+  {
+    "name": "rus-xquad",
+    "hf_repo": "kaengreg/rus-xquad",
+    "qrels_repo": "kaengreg/rus-xquad-qrels",
+    "split": "dev",
+    "task": "Question Answering",
+    "origin": "XQuAD",
+    "official": true
+  },
+  {
+    "name": "rus-xquad-sentences",
+    "hf_repo": "kaengreg/rus-xquad-sentences",
+    "qrels_repo": "kaengreg/rus-xquad-sentences-qrels",
+    "split": "dev",
+    "task": "Question Answering",
+    "origin": "XQuAD",
+    "official": true
+  },
+  {
+    "name": "rus-tydiqa",
+    "hf_repo": "kaengreg/rus-tydiqa",
+    "qrels_repo": "kaengreg/rus-tydiqa-qrels",
+    "split": "dev",
+    "task": "Question Answering",
+    "origin": "TyDi QA",
+    "official": true
+  },
+  {
+    "name": "sberquad-retrieval",
+    "hf_repo": "kaengreg/sberquad-retrieval",
+    "qrels_repo": "kaengreg/sberquad-retrieval-qrels",
+    "split": "validation",
+    "task": "Question Answering",
+    "origin": "Originally Russian",
+    "official": true
+  },
+  {
+    "name": "ruscibench-retrieval",
+    "hf_repo": "kaengreg/ruSciBench-retrieval",
+    "qrels_repo": "kaengreg/ruSciBench-retrieval-qrels",
+    "split": "dev",
+    "task": "Scientific IR",
+    "origin": "Originally Russian",
+    "official": true
+  },
+  {
+    "name": "ru-facts",
+    "hf_repo": "kaengreg/ru-facts",
+    "qrels_repo": "kaengreg/ru-facts-qrels",
+    "split": "train",
+    "task": "Fact Checking",
+    "origin": "Originally Russian",
+    "official": true
+  },
+  {
+    "name": "rubq",
+    "hf_repo": "kaengreg/rubq",
+    "qrels_repo": "kaengreg/rubq-qrels",
+    "split": "test",
+    "task": "Information Retrieval",
+    "origin": "RU-MTEB",
+    "official": true
+  },
+  {
+    "name": "ria-news",
+    "hf_repo": "kaengreg/ria-news",
+    "qrels_repo": "kaengreg/ria-news-qrels",
+    "split": "test",
+    "task": "Information Retrieval",
+    "origin": "RU-MTEB",
+    "official": true
+  },
+  {
+    "name": "wikifacts-articles",
+    "hf_repo": "kaengreg/wikifacts-articles",
+    "qrels_repo": "kaengreg/wikifacts-articles-qrels",
+    "split": "dev",
+    "task": "Information Retrieval",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-para",
+    "hf_repo": "kaengreg/wikifacts-para",
+    "qrels_repo": "kaengreg/wikifacts-para-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-sents",
+    "hf_repo": "kaengreg/wikifacts-sents",
+    "qrels_repo": "kaengreg/wikifacts-sents-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-window_2",
+    "hf_repo": "kaengreg/wikifacts-window_2",
+    "qrels_repo": "kaengreg/wikifacts-window_2-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-window_3",
+    "hf_repo": "kaengreg/wikifacts-window_3",
+    "qrels_repo": "kaengreg/wikifacts-window_3-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-window_4",
+    "hf_repo": "kaengreg/wikifacts-window_4",
+    "qrels_repo": "kaengreg/wikifacts-window_4-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-window_5",
+    "hf_repo": "kaengreg/wikifacts-window_5",
+    "qrels_repo": "kaengreg/wikifacts-window_5-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  },
+  {
+    "name": "wikifacts-window_6",
+    "hf_repo": "kaengreg/wikifacts-window_6",
+    "qrels_repo": "kaengreg/wikifacts-window_6-qrels",
+    "split": "dev",
+    "task": "Fact Checking",
+    "origin": "RusBEIR",
+    "official": true
+  }
+]

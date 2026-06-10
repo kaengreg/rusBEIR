@@ -3,11 +3,10 @@ import os
 import re
 import time
 from tqdm import tqdm
-from deep_translator import GoogleTranslator
 import multiprocessing
 import sys
+from googletrans import Translator
 from pathlib import Path
-
 
 PROGRAMM_START_TIME = time.time()
 
@@ -72,6 +71,16 @@ def chunk_text(text, max_chunk_size=5000):
             all_chunks.extend(chunk_sentence(sent, max_chunk_size))
     return all_chunks
 
+class GTranslatorWrapper:
+    def __init__(self, source, target):
+        self.source = None if source == 'auto' else source  
+        self.target = target
+        self.translator = Translator()
+
+    def translate(self, text):
+        result = self.translator.translate(text, src=self.source, dest=self.target)
+        return result.text
+
 def translate_text(text, translator_obj, max_chunk_size=5000):
     text = text.strip()
     if not text:
@@ -98,7 +107,7 @@ def translate_text(text, translator_obj, max_chunk_size=5000):
                     overall_end_time = time.time()
                     total_time = overall_end_time - PROGRAMM_START_TIME
                     log_message = f"Error: Too many requests. Overall time: {total_time:.2f} seconds\n"
-                    log_file = 'total_time_log.txt'
+                    log_file = '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/time_log.txt'
                     Path(log_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
                     with open(log_file, 'a', encoding='utf-8') as f:
                         f.write(log_message)
@@ -110,6 +119,7 @@ def translate_text(text, translator_obj, max_chunk_size=5000):
                     time.sleep(1)  
                 else:
                     print(f"Error with translation: {e}")
+                    print(f"Error caused by text: {ch}")
                     translated = ""
                     break
 
@@ -141,8 +151,8 @@ def load_already_translated_ids(output_file_path):
 def main(
     input_file_path,
     output_file_path,
-    source_lang='auto',
-    target_lang='en',
+    source_lang='en',
+    target_lang='ru',
     max_chunk_size=5000,
     pause_each=10000,
     pause_time=5*60,
@@ -152,7 +162,8 @@ def main(
     total_lines = count_total_lines(input_file_path)
     line_count = read_checkpoint(checkpoint_file)
 
-    translator_obj = GoogleTranslator(source=source_lang, target=target_lang)
+    translator_obj = GTranslatorWrapper(source_lang, target_lang)
+
     already_translated_ids = load_already_translated_ids(output_file_path)
     processed_new = 0  
 
@@ -230,17 +241,22 @@ def process_file(params):
 
 if __name__ == "__main__":
     input_files = [
-        'corpus_part1.jsonl'
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part1.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part2.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part3.jsonl'
     ]
 
     output_files = [
-        'corpus_part1_ru_google.jsonl'
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part1_ru_google.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part2_ru_google.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/corpus_part3_ru_google.jsonl'
     ]
 
     checkpoint_files = [
-        'part1_line-checkpoint.txt'
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/line_count-chekcpoint-part1.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/line_count-chekcpoint-part2.jsonl',
+        '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/line_count-chekcpoint-part3.jsonl'
     ]
-
 
     source_lang = "en"
     target_lang = "ru"
@@ -270,7 +286,7 @@ if __name__ == "__main__":
             p.join()
 
     except KeyboardInterrupt:
-        print("Recieved KeyboardInterrupt. Terminating all processes...")
+        print("Received KeyboardInterrupt. Terminating all processes...")
         for p in processes:
             if p.is_alive():
                 p.terminate()
@@ -283,9 +299,9 @@ if __name__ == "__main__":
         total_time = overall_end_time - PROGRAMM_START_TIME
 
         log_message = f"Overall time: {total_time:.2f} seconds\n"
-        log_file = 'total_time_log.txt'
+        log_file = '/Users/kaengreg/Documents/Работа /НИВЦ/rusBeIR-home/rusBeIR/translations/touche-2020/time_log.txt'
         Path(log_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
         with open(log_file, 'a', encoding='utf-8') as f:
             f.write(log_message)
 
-        print(log_message) 
+        print(log_message)

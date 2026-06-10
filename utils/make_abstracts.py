@@ -1,6 +1,7 @@
 from datasets import load_dataset
 import pandas as pd
 import json
+from pathlib import Path
 
 dataset = load_dataset('ai-forever/libra', 'long_context_multiq')
 split = 'test'
@@ -38,16 +39,23 @@ for _, item in expanded_ds.iterrows():
 
     tsv_pairs.append(f"{query_id}\t{corpus_id}\t1")
 
-with open('corpus.jsonl', 'w', encoding='utf-8') as f:
+corpus_output_file = 'corpus.jsonl'
+queries_output_file = 'queries.jsonl'
+qrels_output_file = 'test.tsv'
+
+Path(corpus_output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
+with open(corpus_output_file, 'w', encoding='utf-8') as f:
     f.write('\n'.join(json.dumps(entry, ensure_ascii=False) for entry in corpus_dict.values()) + '\n')
 
-with open('queries.jsonl', 'w', encoding='utf-8') as f:
+Path(queries_output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
+with open(queries_output_file, 'w', encoding='utf-8') as f:
     f.write('\n'.join(json.dumps(entry, ensure_ascii=False) for entry in queries_dict.values()) + '\n')
 
 
 """
 In case if qrels could be done this way
 
-with open('test.tsv', 'w', encoding='utf-8') as f:
+Path(qrels_output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
+with open(qrels_output_file, 'w', encoding='utf-8') as f:
     f.write('\n'.join(tsv_pairs) + '\n')
-""""
+"""

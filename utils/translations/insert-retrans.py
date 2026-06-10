@@ -1,5 +1,6 @@
 # %%
 import json
+from pathlib import Path
 
 # %%
 def read_jsonl(file_path, key_field = '_id'):
@@ -16,6 +17,7 @@ def read_jsonl(file_path, key_field = '_id'):
     return data
 
 def save_dicts_to_jsonl(data, filename):
+    Path(filename).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         for item in data:
             f.write(json.dumps(item, ensure_ascii=False) + '\n')
@@ -40,6 +42,5 @@ insert_retrans_in_corpus('corpus.jsonl',
                          'corpus-retrans.jsonl')
 
 # %%
-
 
 

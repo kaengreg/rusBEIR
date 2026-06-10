@@ -1,6 +1,7 @@
 import json
 from deep_translator import GoogleTranslator
 import re
+from pathlib import Path
 from tqdm import tqdm
 
 
@@ -38,6 +39,7 @@ def translate_jsonl(input_file, output_file):
     with open(input_file, 'r', encoding='utf-8') as infile:
         total_lines = sum(1 for _ in infile)
 
+    Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with (open(input_file, 'r', encoding='utf-8') as infile,
           open(output_file, 'w', encoding='utf-8') as outfile):
         for line in tqdm(infile, total=total_lines, desc="Processing lines"):

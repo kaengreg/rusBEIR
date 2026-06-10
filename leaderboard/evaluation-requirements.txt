@@ -1,0 +1,13 @@
+datasets>=2.20.0
+huggingface_hub>=0.24.0,<1.0
+pytrec_eval
+bm25s==0.2.14
+torch
+transformers>=4.51.0
+accelerate
+safetensors
+sentence-transformers>=3.0.0
+scikit-learn>=1.5.1
+numpy>=1.26.4
+tqdm
+PyYAML>=6.0.0

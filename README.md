@@ -8,6 +8,7 @@
   <a href="#installation">Installation</a> |
   <a href="#examples">Examples</a> |
   <a href="#available-datasets">Datasets</a> |
+  <a href="https://huggingface.co/spaces/kaengreg/rusBEIR">Leaderboard</a> |
   <a href="https://huggingface.co/collections/kaengreg/rusbeir-66e28cb06e3e074be55ac0f3">Hugging Face</a>
 </h4>
 
@@ -16,10 +17,30 @@ RusBEIR is a Russian benchmark inspired by [BEIR](https://github.com/beir-cellar
 The datasets in the RusBEIR benchmark consist of available open-source datasets, datasets that have been translated from English, and newly created datasets.
 
 ## Baselines
-NDCG@10 was choosen as a main metric, results could be found [here](https://docs.google.com/spreadsheets/d/19jUZigy-AolNOOhT0EzNggiRoEcvfqL7HRpq0bwHqXc/edit#gid=532683383).
+NDCG@10 is the main metric for RusBEIR. Baseline results and additional metrics such as MAP@10 and Recall@10 are published in the [Hugging Face Leaderboard](https://huggingface.co/spaces/kaengreg/rusBEIR).
+
+## Hugging Face Leaderboard
+
+The official RusBEIR leaderboard is available on Hugging Face: [kaengreg/rusBEIR-leaderboard](https://huggingface.co/spaces/kaengreg/rusBEIR).
+
+The `rusBeIR/leaderboard/` directory contains a Gradio Space for publishing RusBEIR results on Hugging Face.
+It uses `rusBeIR/leaderboard/data/results.jsonl` as a reviewable source of truth and includes an evaluator CLI:
 
 
-Additional results for [MAP@10](https://docs.google.com/spreadsheets/d/19jUZigy-AolNOOhT0EzNggiRoEcvfqL7HRpq0bwHqXc/edit#gid=1808748240) and [Recall@10](https://docs.google.com/spreadsheets/d/19jUZigy-AolNOOhT0EzNggiRoEcvfqL7HRpq0bwHqXc/edit#gid=1398424942) .
+To submit results, evaluate a model with `rusBeIR/leaderboard/scripts/evaluate_model.py` and upload the produced
+`results.jsonl` file through the Submit tab in the Hugging Face Space.
+
+```bash
+python rusBeIR/leaderboard/scripts/evaluate_model.py \
+  --model-id intfloat/multilingual-e5-large \
+  --device cuda \
+  --query-prefix "query: " \
+  --passage-prefix "passage: "
+```
+
+Repository maintainers can additionally use `rusBeIR/leaderboard/scripts/export_eval_results.py` to export accepted
+results to Hugging Face `.eval_results/*.yaml` metadata.
+
 ## Installation
 ``` python
 !git clone https://github.com/kngrg/rusBeIR.git
@@ -51,23 +72,24 @@ Additional results for [MAP@10](https://docs.google.com/spreadsheets/d/19jUZigy-
 | rusBEIR             | Information-Retrieval | wikifacts-articles       | Originally Russian  | 3-level   | —     | 540  | —    | 1,324    | 2,535.9 / 11.4          |
 | rusBEIR             | Fact Checking         | wikifacts-para           | Originally Russian  | 3-level   | —     | 540  | —    | 15,317   | 219.2 / 11.4            |
 | rusBEIR             | Information-Retrieval | wikifacts-sents          | Originally Russian  | 3-level   | —     | 540  | —    | 188,026  | 17.8 / 11.4             |
-| rusBEIR             | Fact Checking         | wikifacts-sliding_para2  | Originally Russian  | 3-level   | —     | 540  | —    | 118,025  | 35.7 / 11.4             |
-| rusBEIR             | Fact Checking         | wikifacts-sliding_para3  | Originally Russian  | 3-level   | —     | 540  | —    | 188,024  | 53.6 / 11.4             |
-| rusBEIR             | Fact Checking         | wikifacts-sliding_para4  | Originally Russian  | 3-level   | —     | 540  | —    | 188,023  | 71.4 / 11.4             |
-| rusBEIR             | Fact Checking         | wikifacts-sliding_para5  | Originally Russian  | 3-level   | —     | 540  | —    | 188,022  | 89.3 / 11.4             |
-| rusBEIR             | Fact Checking         | wikifacts-sliding_para6  | Originally Russian  | 3-level   | —     | 540  | —    | 188,021  | 107.1 / 11.4            |      
+| rusBEIR             | Fact Checking         | wikifacts-window_2  | Originally Russian  | 3-level   | —     | 540  | —    | 118,025  | 35.7 / 11.4             |
+| rusBEIR             | Fact Checking         | wikifacts-window_3  | Originally Russian  | 3-level   | —     | 540  | —    | 188,024  | 53.6 / 11.4             |
+| rusBEIR             | Fact Checking         | wikifacts-window_4  | Originally Russian  | 3-level   | —     | 540  | —    | 188,023  | 71.4 / 11.4             |
+| rusBEIR             | Fact Checking         | wikifacts-window_5  | Originally Russian  | 3-level   | —     | 540  | —    | 188,022  | 89.3 / 11.4             |
+| rusBEIR             | Fact Checking         | wikifacts-window_6  | Originally Russian  | 3-level   | —     | 540  | —    | 188,021  | 107.1 / 11.4            |      
 
 All datasets are available at [HuggingFace](https://huggingface.co/collections/kngrg/rusbeir-66e28cb06e3e074be55ac0f3).
 
 ## Models supported now
 Encoders:
 - BM25
-- E5
+- E5 - requires `query: ` for queries and `passage: ` for documents.
 - BGE
+- [Qwen3 Embedding](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) - requires `last_token` pooling, left padding, and a query instruction prefix.
 - LaBSE
-- [RoSBERTa](https://huggingface.co/ai-forever/ru-en-RoSBERTa)
+- [RoSBERTa](https://huggingface.co/ai-forever/ru-en-RoSBERTa) - requires `search_query: ` for queries and `search_document: ` for documents.
 - [rus-sci-tiny](https://huggingface.co/mlsa-iai-msu-lab/sci-rus-tiny)
-- [FRIDA](https://huggingface.co/ai-forever/FRIDA)
+- [FRIDA](https://huggingface.co/ai-forever/FRIDA) - requires `search_query: ` for queries and `search_document: ` for documents.
 
 Rerankers:
 - [BGE-Reranker-v2-m3](https://huggingface.co/BAAI/bge-reranker-v2-m3)

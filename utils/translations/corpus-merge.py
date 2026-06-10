@@ -3,12 +3,14 @@ import os
 import json
 import argparse
 import re
+from pathlib import Path
 
 # %%
 def merge_jsonl(input_dir, output_file):
     jsonl_files = [f for f in os.listdir(input_dir) if f.endswith('.jsonl')]
     jsonl_files.sort()
 
+    Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
     with open(output_file, 'w') as out_f:
         for filename in jsonl_files:
             file_path = os.path.join(input_dir, filename)
@@ -26,7 +28,8 @@ def sort_jsonl(input_file, output_file):
 
     sorted_records = sorted(records, key=lambda x: x['_id'])
 
-    with open(output_file, 'r', encoding='utf-8') as f:
+    Path(output_file).expanduser().parent.mkdir(parents=True, exist_ok=True)
+    with open(output_file, 'w', encoding='utf-8') as f:
         for record in sorted_records:
             f.write(json.dumps(record, ensure_ascii=False) + '\n')
 
@@ -45,6 +48,5 @@ if __name__ == '__main__':
     main()
 
 # %%
-
 
 

@@ -7,7 +7,11 @@ pandas
 tensorflow
 tf-keras
 scikit-learn==1.5.1
-transformers==4.43.3
+torch
+transformers>=4.51.0
+accelerate
+safetensors
+tqdm
 scipy==1.14.0
 numpy==1.26.4
 bm25s==0.2.14
