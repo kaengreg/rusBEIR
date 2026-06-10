@@ -17,7 +17,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent
 DATASETS_PATH = ROOT/"data"/"datasets.json"
-LOGO_PATH = ROOT/"assets"/"rusBeIR_logo.png"
+LOGO_PATH = ROOT/"assets"/"rusBEIR_logo.png"
 
 RESULTS_PATH = Path(os.getenv("RUSBEIR_RESULTS_PATH", ROOT/"data"/"results.jsonl"))
 DEFAULT_METRIC = "NDCG@10"
@@ -940,16 +940,16 @@ def summary_html() -> str:
     types = sorted({str(record.get("type", "")).strip() for record in records if record.get("type")})
     type_text = ", ".join(types) if types else "n/a"
     logo_uri = logo_data_uri()
-    logo_html = f'<img class="rusbeir-logo" src="{logo_uri}" alt="RusBEIR logo">' if logo_uri else ""
+    logo_html = f'<img class="rusbeir-logo" src="{logo_uri}" alt="rusBEIR logo">' if logo_uri else ""
 
     return f"""
     <div class="rusbeir-shell">
       <section class="rusbeir-hero">
         <div class="rusbeir-hero-copy">
           <div class="rusbeir-kicker">Russian Information Retrieval Benchmark</div>
-          <h1 class="rusbeir-title">RusBEIR Leaderboard</h1>
+          <h1 class="rusbeir-title">rusBEIR Leaderboard</h1>
           <p class="rusbeir-subtitle">
-            Compare dense retrievers, sparse baselines, and reranker pipelines on official RusBEIR datasets.
+            Compare dense retrievers, sparse baselines, and reranker pipelines on official rusBEIR datasets.
             The default ranking is the macro-average of <strong>{DEFAULT_METRIC}</strong>.
           </p>
           <div class="rusbeir-badges">
@@ -1052,7 +1052,7 @@ def task_choices() -> list[str]:
     return ["All", *tasks]
 
 
-with gr.Blocks(title="RusBEIR Leaderboard") as demo:
+with gr.Blocks(title="rusBEIR Leaderboard") as demo:
     summary = gr.HTML(summary_html())
 
     with gr.Tabs():
@@ -1096,7 +1096,7 @@ with gr.Blocks(title="RusBEIR Leaderboard") as demo:
                     """
                     <h2 class="rusbeir-section-title">Official Datasets</h2>
                     <p class="rusbeir-section-note">
-                      RusBEIR tasks used for the default macro-average ranking.
+                      rusBEIR tasks used for the default macro-average ranking.
                     </p>
                     """
                 )
@@ -1142,9 +1142,9 @@ with gr.Blocks(title="RusBEIR Leaderboard") as demo:
             with gr.Column(elem_classes=["rusbeir-panel"]):
                 gr.HTML(
                     """
-                    <h2 class="rusbeir-section-title">About RusBEIR</h2>
+                    <h2 class="rusbeir-section-title">About rusBEIR</h2>
                     <p class="rusbeir-section-note">
-                      RusBEIR is a Russian BEIR-style benchmark for zero-shot information retrieval.
+                      rusBEIR is a Russian BEIR-style benchmark for zero-shot information retrieval.
                       The leaderboard is backed by a plain JSONL file, so every row can be reviewed or
                       mirrored to a Hugging Face Dataset.
                     </p>
@@ -1153,7 +1153,7 @@ with gr.Blocks(title="RusBEIR Leaderboard") as demo:
                     </p>
                     <p class="rusbeir-section-note">
                       Project repository:
-                      <a class="rusbeir-source-link" href="https://github.com/kaengreg/rusBeIR" target="_blank" rel="noopener noreferrer">kaengreg/rusBeIR</a>
+                      <a class="rusbeir-source-link" href="https://github.com/kaengreg/rusBEIR" target="_blank" rel="noopener noreferrer">kaengreg/rusBEIR</a>
                     </p>
                     <h3 class="rusbeir-section-title">Citation</h3>
                     <pre class="rusbeir-citation"><code>@inproceedings{kovalev2025building,
