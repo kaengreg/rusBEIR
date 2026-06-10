@@ -21,7 +21,7 @@ NDCG@10 is the main metric for RusBEIR. Baseline results and additional metrics 
 
 ## Hugging Face Leaderboard
 
-The official RusBEIR leaderboard is available on Hugging Face: [kaengreg/rusBEIR-leaderboard](https://huggingface.co/spaces/kaengreg/rusBEIR).
+The official RusBEIR leaderboard is available on Hugging Face: [kaengreg/rusBEIR](https://huggingface.co/spaces/kaengreg/rusBEIR).
 
 The `rusBeIR/leaderboard/` directory contains a Gradio Space for publishing RusBEIR results on Hugging Face.
 It uses `rusBeIR/leaderboard/data/results.jsonl` as a reviewable source of truth and includes an evaluator CLI:

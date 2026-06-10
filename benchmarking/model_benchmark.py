@@ -36,7 +36,7 @@ class DatasetEvaluator:
             'rus-mmarco': ('kaengreg/rus-mmarco-google', 'kaengreg/rus-mmarco-qrels', 'dev'),
             'rus-miracl': ('kaengreg/rus-miracl', 'kaengreg/rus-miracl-qrels', 'dev'),
             'rus-xquad': ('kaengreg/rus-xquad', 'kaengreg/rus-xquad-qrels', 'dev'),
-            'rus-xquad-sentenes': ('kaengreg/rus-xquad-sentences', 'kaengreg/rus-xquad-sentences-qrels', 'dev'),
+            'rus-xquad-sentences': ('kaengreg/rus-xquad-sentences', 'kaengreg/rus-xquad-sentences-qrels', 'dev'),
             'rus-tydiqa': ('kaengreg/rus-tydiqa', 'kaengreg/rus-tydiqa-qrels', 'dev'),
             'sberquad-retrieval': ('kaengreg/sberquad-retrieval', 'kaengreg/sberquad-retrieval-qrels', 'test'),
             'sberquad-retrieval': ('kaengreg/sberquad-retrieval', 'kaengreg/sberquad-retrieval-qrels', 'validation'),
