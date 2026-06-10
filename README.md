@@ -1,6 +1,6 @@
 ## What is it?
 <h1 align="center">
-<img style="vertical-align:middle" width="450" height="200" src="https://github.com/kngrg/rusBeIR/blob/main/images/rusBeIR_logo.png" />
+<img style="vertical-align:middle" width="450" height="200" src="https://github.com/kngrg/rusBEIR/blob/main/images/rusBEIR_logo.png" />
 </h1>
 
 <h4 align="center">
@@ -13,37 +13,37 @@
 </h4>
 
 
-RusBEIR is a Russian benchmark inspired by [BEIR](https://github.com/beir-cellar/beir), designed for zero-shot evaluation of Information Retrieval (IR) models. Adhering to the principles of BEIR, it offers a robust and diverse evaluation framework, enabling the assessment of IR models across a wide range of tasks and domains in the Russian language.
-The datasets in the RusBEIR benchmark consist of available open-source datasets, datasets that have been translated from English, and newly created datasets.
+rusBEIR is a Russian benchmark inspired by [BEIR](https://github.com/beir-cellar/beir), designed for zero-shot evaluation of Information Retrieval (IR) models. Adhering to the principles of BEIR, it offers a robust and diverse evaluation framework, enabling the assessment of IR models across a wide range of tasks and domains in the Russian language.
+The datasets in the rusBEIR benchmark consist of available open-source datasets, datasets that have been translated from English, and newly created datasets.
 
 ## Baselines
-NDCG@10 is the main metric for RusBEIR. Baseline results and additional metrics such as MAP@10 and Recall@10 are published in the [Hugging Face Leaderboard](https://huggingface.co/spaces/kaengreg/rusBEIR).
+NDCG@10 is the main metric for rusBEIR. Baseline results and additional metrics such as MAP@10 and Recall@10 are published in the [Hugging Face Leaderboard](https://huggingface.co/spaces/kaengreg/rusBEIR).
 
 ## Hugging Face Leaderboard
 
-The official RusBEIR leaderboard is available on Hugging Face: [kaengreg/rusBEIR](https://huggingface.co/spaces/kaengreg/rusBEIR).
+The official rusBEIR leaderboard is available on Hugging Face: [kaengreg/rusBEIR](https://huggingface.co/spaces/kaengreg/rusBEIR).
 
-The `rusBeIR/leaderboard/` directory contains a Gradio Space for publishing RusBEIR results on Hugging Face.
-It uses `rusBeIR/leaderboard/data/results.jsonl` as a reviewable source of truth and includes an evaluator CLI:
+The `rusBEIR/leaderboard/` directory contains a Gradio Space for publishing rusBEIR results on Hugging Face.
+It uses `rusBEIR/leaderboard/data/results.jsonl` as a reviewable source of truth and includes an evaluator CLI:
 
 
-To submit results, evaluate a model with `rusBeIR/leaderboard/scripts/evaluate_model.py` and upload the produced
+To submit results, evaluate a model with `rusBEIR/leaderboard/scripts/evaluate_model.py` and upload the produced
 `results.jsonl` file through the Submit tab in the Hugging Face Space.
 
 ```bash
-python rusBeIR/leaderboard/scripts/evaluate_model.py \
+python rusBEIR/leaderboard/scripts/evaluate_model.py \
   --model-id intfloat/multilingual-e5-large \
   --device cuda \
   --query-prefix "query: " \
   --passage-prefix "passage: "
 ```
 
-Repository maintainers can additionally use `rusBeIR/leaderboard/scripts/export_eval_results.py` to export accepted
+Repository maintainers can additionally use `rusBEIR/leaderboard/scripts/export_eval_results.py` to export accepted
 results to Hugging Face `.eval_results/*.yaml` metadata.
 
 ## Installation
 ``` python
-!git clone https://github.com/kngrg/rusBeIR.git
+!git clone https://github.com/kngrg/rusBEIR.git
 ``` 
 
 ## Available Datasets
@@ -102,7 +102,7 @@ Any Transformers model can be added via describing class derived from HFTransfor
 This example shows how to evaluate one dataset using BM25 model with ElasticSearch
 ```python
 """
-This example shows how to evaluate ElasticSearch-BM25 in rusBeIR.
+This example shows how to evaluate ElasticSearch-BM25 in rusBEIR.
 We advise you to use docker for running ElasticSearch. 
 To be able to run the code below you must have docker locally installed in your machine.
 To install docker on your local machine, please refer here: https://docs.docker.com/get-docker/
@@ -126,9 +126,9 @@ Use this for older elasticsearch versions (< 8)
 """ 
 
 
-from rusBeIR.beir.datasets.data_loader_hf import HFDataLoader
-from rusBeIR.beir.retrieval.search.lexical import BM25Search as BM25
-from rusBeIR.beir.retrieval.evaluation import EvaluateRetrieval
+from rusBEIR.beir.datasets.data_loader_hf import HFDataLoader
+from rusBEIR.beir.retrieval.search.lexical import BM25Search as BM25
+from rusBEIR.beir.retrieval.evaluation import EvaluateRetrieval
 
 #### Load dataset via HF 
 corpus, queries, qrels = HFDataLoader(hf_repo="kngrg/rus-scifact", hf_repo_qrels="kngrg/rus-scifact-qrels", streaming=False,
@@ -160,23 +160,23 @@ for metric in metrics.keys():
 
 This example shows how to evaluate all datasets using BM25 model with ElasticSearch
 ``` python
-from rusBeIR.benchmarking.model_benchmark import DatasetEvaluator
-from rusBeIR.beir.retrieval.search.lexical import BM25Search as BM25
+from rusBEIR.benchmarking.model_benchmark import DatasetEvaluator
+from rusBEIR.beir.retrieval.search.lexical import BM25Search as BM25
 
 bm25 = BM25(index_name="bm25", hostname="localhost:9200", initialize=True)
 evaluator = DatasetEvaluator(model=bm25)
 
-evaluator.retrieve(text_type='processed_text', results_path='rusBeIR-results)
-evaluator.evaluate(results_path='rusBeIR-results')
+evaluator.retrieve(text_type='processed_text', results_path='rusBEIR-results)
+evaluator.evaluate(results_path='rusBEIR-results')
 evaluator.print_results()
 ```
 
 ### E5 model 
 This example shows how to evaluate one dataset using E5 model
 ``` python
-from rusBeIR.beir.datasets.data_loader_hf import HFDataLoader
-from rusBeIR.retrieval.models.e5 import E5Model
-from rusBeIR.beir.retrieval.evaluation import EvaluateRetrieval
+from rusBEIR.beir.datasets.data_loader_hf import HFDataLoader
+from rusBEIR.retrieval.models.e5 import E5Model
+from rusBEIR.beir.retrieval.evaluation import EvaluateRetrieval
 
 corpus, queries, qrels = HFDataLoader(hf_repo="kngrg/rus-scifact", hf_repo_qrels="kngrg/rus-scifact-qrels", streaming=False,
                                        keep_in_memory=False).load(split='test')
@@ -199,13 +199,13 @@ for metric in metrics.keys():
 ```
 This example shows how to evaluate all datasets using E5 model
 ``` python
-from rusBeIR.benchmarking.model_benchmark import DatasetEvaluator
-from rusBeIR.retrieval.models.E5Model import E5Model
+from rusBEIR.benchmarking.model_benchmark import DatasetEvaluator
+from rusBEIR.retrieval.models.E5Model import E5Model
 
 e5 = E5Model()
 evaluator = DatasetEvaluator(model=e5)
 
-evaluator.retrieve(text_type='processed_text', results_path="rusBeIR-e5-results")
-evaluator.evaluate(results_path="rusBeIR-e5-results")
+evaluator.retrieve(text_type='processed_text', results_path="rusBEIR-e5-results")
+evaluator.evaluate(results_path="rusBEIR-e5-results")
 evaluator.print_results()
 ```
