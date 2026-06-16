@@ -46,6 +46,14 @@ class HFDataLoader:
         self.streaming = streaming
         self.keep_in_memory = keep_in_memory
 
+    def load_hf_split(self, split_name: str):
+        try:
+            dataset = load_dataset(self.hf_repo, split_name, keep_in_memory=self.keep_in_memory, streaming=self.streaming)
+            return next(iter(dataset.values()))
+        except:
+            dataset = load_dataset(self.hf_repo, keep_in_memory=self.keep_in_memory, streaming=self.streaming)
+            return dataset[split_name]
+
     @staticmethod
     def check(fIn: str, ext: str):
         if not os.path.exists(fIn):
@@ -109,12 +117,12 @@ class HFDataLoader:
 
     def _load_corpus(self):
         if self.hf_repo:
-            corpus_ds = load_dataset(
-                self.hf_repo, 'corpus', keep_in_memory=self.keep_in_memory, streaming=self.streaming)
+            corpus_ds = self.load_hf_split("corpus")
         else:
             corpus_ds = load_dataset('json', data_files=self.corpus_file,
                                      streaming=self.streaming, keep_in_memory=self.keep_in_memory)
-        corpus_ds = next(iter(corpus_ds.values()))  # get first split
+            corpus_ds = next(iter(corpus_ds.values()))  # get first split
+
         corpus_ds = corpus_ds.cast_column('_id', Value('string'))
         corpus_ds = corpus_ds.rename_column('_id', 'id')
         corpus_ds = corpus_ds.remove_columns([col for col in corpus_ds.column_names if col not in [
@@ -130,12 +138,12 @@ class HFDataLoader:
 
     def _load_queries(self):
         if self.hf_repo:
-            queries_ds = load_dataset(
-                self.hf_repo, 'queries', keep_in_memory=self.keep_in_memory, streaming=self.streaming)
+            queries_ds = self.load_hf_split("queries")
         else:
             queries_ds = load_dataset('json', data_files=self.query_file,
                                       streaming=self.streaming, keep_in_memory=self.keep_in_memory)
-        queries_ds = next(iter(queries_ds.values()))  # get first split
+            queries_ds = next(iter(queries_ds.values()))  # get first split
+
         queries_ds = queries_ds.cast_column('_id', Value('string'))
         queries_ds = queries_ds.rename_column('_id', 'id')
         queries_ds = queries_ds.remove_columns(
@@ -155,6 +163,13 @@ class HFDataLoader:
         else:
             qrels_ds = load_dataset(
                 'csv', data_files=self.qrels_file, delimiter='\t', keep_in_memory=self.keep_in_memory)
+        
+        required_columns = ['query-id', 'corpus-id', 'score']
+        extra_columns = [col for col in qrels_ds.column_names if col not in required_columns]
+
+        if extra_columns:
+            qrels_ds = qrels_ds.remove_columns(extra_columns)
+
         features = Features({'query-id': Value('string'),
                             'corpus-id': Value('string'), 'score': Value('float')})
         qrels_ds = qrels_ds.cast(features)

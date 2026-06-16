@@ -183,15 +183,68 @@ def evaluate_dataset(model, model_name: str, dataset: dict[str, Any], k_values: 
     mrr = retriever.evaluate_custom(qrels, results, k_values, "mrr")
     return merge_metrics(ndcg, map_scores, recall, precision, mrr)
 
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return[]
+    
+    records = []
+    with path.open("r", encoding="utf-8") as file:
+        for line_n, line in enumerate(file, start=1):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError as error:
+                raise ValueError(f"Invalid JSON in {path} at line {line_n}: {error}")
+    return records
 
-def append_jsonl(path: Path, record: dict[str, Any]) -> None:
+
+def find_existing_record(path: Path, model_id: str) -> dict[str, Any] | None:
+    for record in reversed(read_jsonl(path)):
+        if record.get("model_id") == model_id:
+            return record
+    return None
+
+
+def insert_jsonl_record(path: Path, record: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8") as file:
-        file.write(json.dumps(record, ensure_ascii=False, sort_keys=True))
-        file.write("\n")
+    records = [item for item in read_jsonl(path) if item.get("model_id") != record["model_id"]]
+    records.append(record)
+
+    tmp_path = path.with_name(f"{path.name}.tmp")
+    with tmp_path.open("w", encoding="utf-8") as file:
+        for item in records:
+            file.write(json.dumps(item, ensure_ascii=False, sort_keys=True))
+            file.write("\n")
+    tmp_path.replace(path)
 
 
-def parse_args() -> argparse.Namespace:
+def build_result_record(args, record_model_id: str, model_name: str, organization: str,
+                        hardware: str, started: float, per_dataset: dict[str, dict[str, float]]) -> dict[str, Any]:
+    record = {
+        "model_id": record_model_id,
+        "model_name": model_name,
+        "organization": organization,
+        "type": args.model_type,
+        "date": date.today().isoformat(),
+        "verified": False,
+        "hardware": hardware,
+        "runtime_seconds": round(time.time() - started, 2),
+        "source_url": args.source_url,
+        "scores": {
+            "average": average_metrics(per_dataset),
+            "datasets": per_dataset,
+        },
+        "notes": args.notes,
+    }
+    if args.model_type == "reranker":
+        record["base_model_id"] = args.first_stage_model_id
+        record["rerank_top_k"] = args.rerank_top_k or max(args.k_values)
+    return record
+
+
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-id", default="", help="Hugging Face model id for dense and reranker models. Defaults to sparse model name for sparse runs.")
     parser.add_argument("--model-name", default="", help="Display name. Defaults to the last segment of --model-id.")
@@ -204,7 +257,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--rerank-top-k", type=int, default=None, help="Number of first-stage hits to rerank. Defaults to max(k-values).")
     parser.add_argument("--rerank-batch-size", type=int, default=32)
     parser.add_argument("--rerank-max-length", type=int, default=512)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="JSONL file to append the leaderboard row to.")
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="JSONL file to update with the leaderboard row.")
     parser.add_argument("--raw-results-dir", type=Path, default=None, help="Optional directory for raw retrieval results.")
     parser.add_argument("--datasets", nargs="*", default=None, help="Dataset names to evaluate. Defaults to all official datasets.")
     parser.add_argument("--limit-datasets", type=int, default=None, help="Evaluate only the first N selected datasets.")
@@ -232,6 +285,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--no-lowercase", action="store_true")
     parser.add_argument("--source-url", default="")
     parser.add_argument("--notes", default="")
+    parser.add_argument("--resume", action="store_true",
+                        help="Reuse existing per-dataset scores for this model_id from --output and skip already computed datasets.")
     return parser.parse_args()
 
 
@@ -271,16 +326,34 @@ def main() -> None:
             missing = "\n".join(str(path) for path in missing_results)
             raise SystemExit(f"Missing first-stage result files:\n{missing}")
 
+    record_model_id = args.model_id
+    if args.model_type == "reranker":
+        record_model_id = f"{args.first_stage_model_id}+{args.model_id}"
+
+    model_name = args.model_name or record_model_id.split("/")[-1]
+    organization = args.model_id.split("/", 1)[0] if "/" in args.model_id else ""
+
     model, hardware = build_model(args)
 
     per_dataset: dict[str, dict[str, float]] = {}
+    if args.resume:
+        existing_record = find_existing_record(args.output, record_model_id)
+        existing_scores = (existing_record or {}).get("scores", {}).get("datasets", {})
+        if isinstance(existing_scores, dict):
+            per_dataset.update(existing_scores)
+
     model_file_name = safe_name(args.model_id)
     if args.model_type == "reranker":
         model_file_name = f"{model_file_name}__rerank_{first_stage_model_name}"
 
     for dataset in datasets:
-        print(f"Evaluating {dataset['name']} ({dataset['split']})", flush=True)
-        per_dataset[dataset["name"]] = evaluate_dataset(
+        dataset_name = dataset["name"]
+        if args.resume and dataset_name in per_dataset:
+            print(f"Skipping {dataset_name} ({dataset['split']}): already present in {args.output}", flush=True)
+            continue
+
+        print(f"Evaluating {dataset_name} ({dataset['split']})", flush=True)
+        per_dataset[dataset_name] = evaluate_dataset(
             model=model,
             model_name=model_file_name,
             dataset=dataset,
@@ -294,34 +367,12 @@ def main() -> None:
             first_stage_model_name=first_stage_model_name,
             rerank_top_k=args.rerank_top_k
         )
+        checkpoint = build_result_record(args, record_model_id, model_name, organization, hardware, started, per_dataset)
+        insert_jsonl_record(args.output, checkpoint)
+        print(f"Saved checkpoint for {dataset_name} to {args.output}", flush=True)
 
-    record_model_id = args.model_id
-    if args.model_type == "reranker":
-        record_model_id = f"{args.first_stage_model_id}+{args.model_id}"
-
-    model_name = args.model_name or record_model_id.split("/")[-1]
-    organization = args.model_id.split("/", 1)[0] if "/" in args.model_id else ""
-    record = {
-        "model_id": record_model_id,
-        "model_name": model_name,
-        "organization": organization,
-        "type": args.model_type,
-        "date": date.today().isoformat(),
-        "verified": False,
-        "hardware": hardware,
-        "runtime_seconds": round(time.time() - started, 2),
-        "source_url": args.source_url,
-        "scores": {
-            "average": average_metrics(per_dataset),
-            "datasets": per_dataset,
-        },
-        "notes": args.notes,
-    }
-    if args.model_type == "reranker":
-        record["base_model_id"] = args.first_stage_model_id
-        record["rerank_top_k"] = args.rerank_top_k or max(args.k_values)
-
-    append_jsonl(args.output, record)
+    record = build_result_record(args, record_model_id, model_name, organization, hardware, started, per_dataset)
+    insert_jsonl_record(args.output, record)
     print(json.dumps(record, ensure_ascii=False, indent=2), flush=True)
 
 

@@ -241,5 +241,14 @@
     "task": "Fact Checking",
     "origin": "RusBEIR",
     "official": true
+  },
+  {
+    "name": "legal_search_2004",
+    "hf_repo": "fitkovskaja/legal_search_2004",
+    "qrels_repo": "fitkovskaja/legal_search_2004_qrels",
+    "split": "train",
+    "task": "Information Retrieval",
+    "origin": "RusBEIR",
+    "official": true
   }
 ]
