@@ -26,7 +26,7 @@ class QueryDataset(Dataset):
 
 class DenseHFModels:
     def __init__(self, model_name: str, maxlen: int = 512, batch_size: int = 128, device: str = 'cuda',
-                 model_sep: str = "[SEP]", padding_side: str | None = None):
+                 model_sep: str = "\n", padding_side: str | None = None):
         """
         initialize model and tokenizer from hf-transformers
         :param model_name: hf-model repo
