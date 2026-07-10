@@ -250,5 +250,14 @@
     "task": "Information Retrieval",
     "origin": "RusBEIR",
     "official": true
+  },
+  {
+    "name": "legal_search_2007",
+    "hf_repo": "fitkovskaja/legal_search_2007",
+    "qrels_repo": "fitkovskaja/legal_search_2007_qrels",
+    "split": "train",
+    "task": "Information Retrieval",
+    "origin": "RusBEIR",
+    "official": true
   }
 ]

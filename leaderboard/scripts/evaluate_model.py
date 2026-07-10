@@ -65,9 +65,18 @@ def average_metrics(per_dataset: dict[str, dict[str, float]]) -> dict[str, float
 
 
 def retrieve(model, corpus: dict[str, dict[str, str]], queries: dict[str, str], top_k: int,
-             query_batch_size: int, num_workers: int) -> dict[str, dict[str, float]]:
+             query_batch_size: int, num_workers: int, dense_backend: str = "exact", faiss_index_dir: str | Path = None,
+             faiss_index_name: str = "index", rebuild_faiss_index: bool = False, corpus_batch_size: int = 50000,
+             faiss_device: str = "auto", faiss_gpu_id: int = 0) -> dict[str, dict[str, float]]:
     if isinstance(model, BaseSearch):
         return EvaluateRetrieval(retriever=model, k_values=[top_k]).retrieve(corpus, queries)
+
+    if dense_backend == "faiss":
+        return model.retrieve_faiss(queries=queries, corpus=corpus, top_n=top_k, query_batch_size=query_batch_size,
+                                    corpus_batch_size=corpus_batch_size, index_dir=faiss_index_dir, 
+                                    index_name=faiss_index_name, rebuild_index=rebuild_faiss_index,
+                                    faiss_device=faiss_device, faiss_gpu_id=faiss_gpu_id)  
+
     return model.retrieve(queries, corpus, top_n=top_k, data_batch_size=query_batch_size, num_workers=num_workers)
 
 
@@ -152,7 +161,9 @@ def build_model(args: argparse.Namespace):
 def evaluate_dataset(model, model_name: str, dataset: dict[str, Any], k_values: list[int], text_type: str,
                      query_batch_size: int, num_workers: int, raw_results_dir: Path | None,
                      model_type: str, first_stage_results_dir: Path | None,
-                     first_stage_model_name: str | None, rerank_top_k: int | None) -> dict[str, float]:
+                     first_stage_model_name: str | None, rerank_top_k: int | None,
+                     dense_backend: str, faiss_index_dir: Path | None, rebuild_faiss_index: bool,
+                     corpus_batch_size: int, faiss_device: str, faiss_gpu_id: int) -> dict[str, float]:
     
     corpus, queries, qrels = HFDataLoader(hf_repo=dataset["hf_repo"], hf_repo_qrels=dataset["qrels_repo"],
         streaming=False, keep_in_memory=False, text_type=text_type).load(split=dataset["split"])
@@ -170,7 +181,11 @@ def evaluate_dataset(model, model_name: str, dataset: dict[str, Any], k_values: 
 
         results = model.rerank(corpus, queries, first_stage_results, top_k=rerank_top_k or max(k_values))
     else:
-        results = retrieve(model=model, corpus=corpus, queries=queries, top_k=max(k_values), query_batch_size=query_batch_size, num_workers=num_workers)
+        results = retrieve(model=model, corpus=corpus, queries=queries, top_k=max(k_values), query_batch_size=query_batch_size,
+                           num_workers=num_workers, dense_backend=dense_backend, faiss_index_dir=faiss_index_dir, faiss_index_name=f"{model_name}_{dataset['name']}_{dataset['split']}",
+                           rebuild_faiss_index=rebuild_faiss_index, corpus_batch_size=corpus_batch_size,
+                           faiss_device=faiss_device, faiss_gpu_id=faiss_gpu_id)
+
 
     if raw_results_dir is not None:
         raw_results_dir.mkdir(parents=True, exist_ok=True)
@@ -276,6 +291,13 @@ def parse_args():
     parser.add_argument("--model-sep", default="[SEP]")
     parser.add_argument("--padding-side", choices=["left", "right"], default=None,
                         help="Tokenizer padding side. Qwen3 Embedding models should use left padding with last_token pooling.")
+    parser.add_argument("--dense-backend", choices=["exact", "faiss"], default="faiss")
+    parser.add_argument("--faiss-index-dir", type=Path, default=Path("leaderboard/faiss_indexes"))
+    parser.add_argument("--rebuild-faiss-index", action="store_true")
+    parser.add_argument("--corpus-batch-size", type=int, default=50000)
+    parser.add_argument("--faiss-device", choices=["auto", "cpu", "cuda"], default="auto",
+                        help="Device for FAISS index/search. auto uses GPU when the installed FAISS build supports it.")
+    parser.add_argument("--faiss-gpu-id", type=int, default=0)
     parser.add_argument("--bm25-method", default="lucene")
     parser.add_argument("--bm25-k1", type=float, default=None)
     parser.add_argument("--bm25-b", type=float, default=None)
@@ -365,7 +387,13 @@ def main() -> None:
             model_type=args.model_type,
             first_stage_results_dir=args.first_stage_results_dir,
             first_stage_model_name=first_stage_model_name,
-            rerank_top_k=args.rerank_top_k
+            rerank_top_k=args.rerank_top_k,
+            dense_backend=args.dense_backend,
+            faiss_index_dir=args.faiss_index_dir,
+            rebuild_faiss_index=args.rebuild_faiss_index,
+            corpus_batch_size=args.corpus_batch_size,
+            faiss_device=args.faiss_device,
+            faiss_gpu_id=args.faiss_gpu_id,
         )
         checkpoint = build_result_record(args, record_model_id, model_name, organization, hardware, started, per_dataset)
         insert_jsonl_record(args.output, checkpoint)

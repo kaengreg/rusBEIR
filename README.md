@@ -33,10 +33,17 @@ To submit results, evaluate a model with `rusBEIR/leaderboard/scripts/evaluate_m
 ```bash
 python rusBEIR/leaderboard/scripts/evaluate_model.py \
   --model-id intfloat/multilingual-e5-large \
+  --dense-backend faiss \
+  --faiss-device auto \
+  --faiss-index-dir rusBEIR/leaderboard/faiss_indexes \
   --device cuda \
   --query-prefix "query: " \
-  --passage-prefix "passage: "
+  --passage-prefix "passage: " \
+  --resume
 ```
+
+Dense evaluation uses FAISS for large corpora such as `rus-mmarco` and `rus-miracl`; exact search remains available
+with `--dense-backend exact` for debugging and small smoke tests.
 
 Repository maintainers can additionally use `rusBEIR/leaderboard/scripts/export_eval_results.py` to export accepted
 results to Hugging Face `.eval_results/*.yaml` metadata.
