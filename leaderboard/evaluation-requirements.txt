@@ -11,3 +11,4 @@ scikit-learn>=1.5.1
 numpy>=1.26.4
 tqdm
 PyYAML>=6.0.0
+faiss-cpu>=1.8.0

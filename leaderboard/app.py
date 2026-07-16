@@ -2,6 +2,7 @@ import base64
 import inspect
 import json
 import os
+import threading
 from html import escape
 from datetime import date
 from pathlib import Path
@@ -13,6 +14,8 @@ os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 
 import gradio as gr
 import pandas as pd
+from huggingface_hub import CommitOperationAdd, HfApi, hf_hub_download
+from huggingface_hub.errors import HfHubHTTPError
 
 
 ROOT = Path(__file__).resolve().parent
@@ -20,6 +23,13 @@ DATASETS_PATH = ROOT/"data"/"datasets.json"
 LOGO_PATH = ROOT/"assets"/"rusBEIR_logo.png"
 
 RESULTS_PATH = Path(os.getenv("RUSBEIR_RESULTS_PATH", ROOT/"data"/"results.jsonl"))
+RESULTS_REPO_ID = os.getenv("RUSBEIR_RESULTS_REPO_ID") or os.getenv("SPACE_ID")
+RESULTS_REPO_TYPE = os.getenv("RUSBEIR_RESULTS_REPO_TYPE", "space")
+RESULTS_REPO_PATH = os.getenv("RUSBEIR_RESULTS_REPO_PATH", "data/results.jsonl")
+RESULTS_REVISION = os.getenv("RUSBEIR_RESULTS_REVISION", "main")
+HF_TOKEN = os.getenv("HF_TOKEN")
+
+RESULTS_LOCK = threading.Lock()
 DEFAULT_METRIC = "NDCG@10"
 METRICS = ["NDCG@10", "MAP@10", "Recall@10", "P@10", "MRR@10"]
 STATIC_COLUMNS = ["Rank", "Model"]
@@ -39,7 +49,10 @@ DISPLAY_COLUMN_NAMES = {
     "wikifacts-window_4": "wikifacts\nwindow 4",
     "wikifacts-window_5": "wikifacts\nwindow 5",
     "wikifacts-window_6": "wikifacts\nwindow 6",
+    "legal_search_2004": "legal_search\n2004",
+    "legal_search_2007": "legal_search\n2007"
 }
+
 CUSTOM_CSS = """
 :root {
   --rusbeir-bg: #f7f8fb;
@@ -828,15 +841,15 @@ def uploaded_file_text(uploaded_file: Any) -> str:
     return Path(path).read_text(encoding="utf-8-sig")
 
 
-def append_submission_records(records: list[dict[str, Any]]) -> tuple[int, int]:
+def merge_submission_records(current_records: list[dict[str, Any]], records: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int, int]:
     existing = set()
-    for item in load_results():
+    for item in current_records:
         try:
             existing.add(json.dumps(normalize_submission_record(item), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
         except ValueError:
             continue
 
-    serialized_records = []
+    merged_records = list(current_records)
     skipped = 0
     for record in records:
         serialized = json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
@@ -844,32 +857,70 @@ def append_submission_records(records: list[dict[str, Any]]) -> tuple[int, int]:
             skipped += 1
             continue
         existing.add(serialized)
-        serialized_records.append(serialized)
+        merged_records.append(record)
 
-    if not serialized_records:
-        return 0, skipped
+    return merged_records, len(merged_records) - len(current_records), skipped
 
+
+def serialize_jsonl(records: list[dict[str, Any]]) -> bytes:
+    text = "".join(
+        f"{json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(',', ':'))}\n"
+        for record in records
+    )
+    return text.encode("utf-8")
+
+
+def write_local_results(content: bytes) -> None:
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with RESULTS_PATH.open("a", encoding="utf-8") as file:
-        needs_newline = RESULTS_PATH.exists() and RESULTS_PATH.stat().st_size > 0
-        if needs_newline:
-            with RESULTS_PATH.open("rb") as check_file:
-                check_file.seek(-1, os.SEEK_END)
-                needs_newline = check_file.read(1) != b"\n"
-        if needs_newline:
-            file.write("\n")
-        file.write("\n".join(serialized_records))
-
-    return len(serialized_records), skipped
+    temporary_path = RESULTS_PATH.with_suffix(f"{RESULTS_PATH.suffix}.tmp")
+    temporary_path.write_bytes(content)
+    temporary_path.replace(RESULTS_PATH)
 
 
-def add_submission_record(
-    uploaded_file: Any,
-    metric: str,
-    task_filter: str,
-    verified_only: bool,
-    model_filter: str,
-) -> tuple[str, str, str]:
+def append_submission_records(records: list[dict[str, Any]]) -> tuple[int, int, str | None]:
+    if not RESULTS_REPO_ID:
+        merged, added, skipped = merge_submission_records(load_results(), records)
+        if added:
+            write_local_results(serialize_jsonl(merged))
+        return added, skipped, None
+
+    if not HF_TOKEN:
+        raise ValueError("HF_TOKEN secret is missing. Add a fine-grained write token in the Space settings.")
+
+    api = HfApi(token=HF_TOKEN)
+    with RESULTS_LOCK:
+        for attempt in range(3):
+            repo_info = api.repo_info(repo_id=RESULTS_REPO_ID, repo_type=RESULTS_REPO_TYPE, revision=RESULTS_REVISION)
+
+            remote_path = hf_hub_download(repo_id=RESULTS_REPO_ID, filename=RESULTS_REPO_PATH, repo_type=RESULTS_REPO_TYPE, revision=repo_info.sha, token=HF_TOKEN)
+
+            current_records = read_jsonl(Path(remote_path))
+            merged, added, skipped = merge_submission_records(current_records, records)
+            if not added:
+                write_local_results(serialize_jsonl(merged))
+                return 0, skipped, None
+
+            content = serialize_jsonl(merged)
+            try:
+                commit = api.create_commit(
+                    repo_id=RESULTS_REPO_ID,
+                    repo_type=RESULTS_REPO_TYPE,
+                    revision=RESULTS_REVISION,
+                    parent_commit=repo_info.sha,
+                    operations=[CommitOperationAdd(path_in_repo=RESULTS_REPO_PATH, path_or_fileobj=content)],
+                    commit_message=f"Add {added} leaderboard result(s)")
+            except HfHubHTTPError:
+                if attempt < 2:
+                    continue
+                raise
+
+            write_local_results(content)
+            return added, skipped, commit.commit_url
+
+    raise RuntimeError("Could not update leaderboard results after multiple attempts.")
+
+
+def add_submission_record(uploaded_file: Any, metric: str, task_filter: str, verified_only: bool, model_filter: str) -> tuple[str, str, str]:
     try:
         file_text = uploaded_file_text(uploaded_file)
     except OSError as exc:
@@ -887,8 +938,8 @@ def add_submission_record(
 
     try:
         records = parse_submission_records(file_text)
-        added, skipped = append_submission_records(records)
-    except (json.JSONDecodeError, ValueError, OSError) as exc:
+        added, skipped, commit_url = append_submission_records(records)
+    except (json.JSONDecodeError, ValueError, OSError, HfHubHTTPError) as exc:
         return (
             f"Submission was not added: {exc}",
             summary_html(),
@@ -901,6 +952,8 @@ def add_submission_record(
         status = f"Added {added} record(s) to `{RESULTS_PATH.name}`."
         if skipped:
             status += f" Skipped {skipped} duplicate record(s)."
+        if commit_url:
+            status += f" [Hub commit]({commit_url})"
 
     return (
         status,
@@ -1077,18 +1130,14 @@ with gr.Blocks(title="rusBEIR Leaderboard") as demo:
                 table = gr.HTML(value=leaderboard_table_html(DEFAULT_METRIC, "All", False, ""))
 
                 for control in [metric, task_filter, verified_only, model_filter]:
-                    control.change(
-                        leaderboard_table_html,
+                    control.change(leaderboard_table_html,
                         inputs=[metric, task_filter, verified_only, model_filter],
-                        outputs=table,
-                    )
+                        outputs=table)
 
                 reload_button = gr.Button("Reload results", variant="secondary")
-                reload_button.click(
-                    leaderboard_table_html,
+                reload_button.click(leaderboard_table_html,
                     inputs=[metric, task_filter, verified_only, model_filter],
-                    outputs=table,
-                )
+                    outputs=table)
 
         with gr.Tab("Datasets"):
             with gr.Column(elem_classes=["rusbeir-panel"]):
@@ -1125,18 +1174,13 @@ with gr.Blocks(title="rusBEIR Leaderboard") as demo:
                     ```
                     """
                 )
-                results_file = gr.File(
-                    label="Upload results.jsonl",
-                    file_types=[".jsonl", ".json"],
-                    type="filepath",
-                )
+                results_file = gr.File(label="Upload results.jsonl", file_types=[".jsonl", ".json"], type="filepath")
+                
                 submit_status = gr.Markdown()
                 add_button = gr.Button("Add to leaderboard", variant="primary")
-                add_button.click(
-                    add_submission_record,
+                add_button.click(add_submission_record,
                     inputs=[results_file, metric, task_filter, verified_only, model_filter],
-                    outputs=[submit_status, summary, table],
-                )
+                    outputs=[submit_status, summary, table])
 
         with gr.Tab("About"):
             with gr.Column(elem_classes=["rusbeir-panel"]):
@@ -1173,7 +1217,7 @@ if __name__ == "__main__":
         "server_port": int(os.getenv("PORT", "7860")),
         "show_error": True,
         "css": CUSTOM_CSS,
-        "js": CUSTOM_JS,
+        "js": CUSTOM_JS
     }
     if "ssr_mode" in inspect.signature(demo.launch).parameters:
         launch_kwargs["ssr_mode"] = False

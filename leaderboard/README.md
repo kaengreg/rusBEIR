@@ -18,7 +18,7 @@ The Space is intentionally backed by plain files:
 
 - `data/datasets.json` describes the official RusBEIR evaluation tasks.
 - `data/results.jsonl` stores reviewed leaderboard rows.
-- `scripts/evaluate_model.py` evaluates a Hugging Face embedding model and appends a result row.
+1- `scripts/evaluate_model.py` evaluates a Hugging Face embedding model and updates a result row after every dataset.
 - `scripts/export_eval_results.py` exports a row to Hugging Face `.eval_results/*.yaml` format.
 - `hub/eval.yaml` is a draft benchmark dataset configuration for Hugging Face Eval Results.
 
@@ -30,7 +30,6 @@ pip install -r requirements.txt
 python app.py
 ```
 
-`requirements.txt` is intentionally small because the Space only renders reviewed results.
 Use `evaluation-requirements.txt` for local or GPU-runner model evaluation.
 
 ## Evaluate A Model
@@ -41,11 +40,36 @@ From the repository root:
 pip install -r rusBeIR/leaderboard/evaluation-requirements.txt
 python rusBeIR/leaderboard/scripts/evaluate_model.py \
   --model-id intfloat/multilingual-e5-large \
+  --dense-backend faiss \
+  --faiss-device auto \
+  --faiss-index-dir rusBeIR/leaderboard/faiss_indexes \
   --device cuda \
   --query-prefix "query: " \
   --passage-prefix "passage: " \
-  --raw-results-dir rusBeIR/leaderboard/raw/intfloat__multilingual-e5-large
+  --raw-results-dir rusBeIR/leaderboard/raw/intfloat__multilingual-e5-large \
+  --resume
 ```
+
+Dense retrieval supports two backends:
+
+- `--dense-backend faiss` uses FAISS `IndexFlatIP` over L2-normalized embeddings. This is the recommended backend for
+  full benchmark runs and large corpora such as `rus-mmarco` and `rus-miracl`.
+- `--dense-backend exact` uses the previous in-memory cosine-similarity implementation. Use it only for debugging or
+  small smoke tests.
+
+FAISS can run on CPU or GPU:
+
+```bash
+--faiss-device auto  # use GPU when the installed FAISS build supports it, otherwise CPU
+--faiss-device cpu   # force CPU FAISS
+--faiss-device cuda --faiss-gpu-id 0
+```
+
+FAISS indexes are saved in CPU format under `--faiss-index-dir` and reused on repeated runs. Use
+`--rebuild-faiss-index` to rebuild an existing index.
+
+`evaluate_model.py` checkpoints progress after every dataset by updating the same JSONL row. If a run is interrupted,
+rerun the same command with `--resume` to skip datasets already present in the output row.
 
 For a quick smoke test on one dataset:
 
@@ -101,8 +125,9 @@ python rusBeIR/leaderboard/scripts/evaluate_model.py \
   --datasets rus-scifact
 ```
 
-The script appends a JSONL row to `data/results.jsonl`. Set `"verified": true` only after the raw retrieval
-results, command, model revision, and hardware are auditable.
+The script updates one JSONL row in `data/results.jsonl` for the evaluated `model_id`. Set `"verified": true` only
+after the raw retrieval results, command, model revision, and hardware are auditable. The row is rewritten after each
+dataset so long runs can be resumed safely.
 
 ## Export HF Eval Results
 
